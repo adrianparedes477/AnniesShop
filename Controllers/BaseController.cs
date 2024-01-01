@@ -1,6 +1,10 @@
+using System.Data.Common;
+using System.Diagnostics;
 using AnniesShop.Data;
 using AnniesShop.Models;
+using AnniesShop.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 
@@ -40,6 +44,33 @@ namespace AnniesShop.Controllers
             }
 
             return count;
+        }
+
+        protected IActionResult HandleError(Exception e)
+        {
+            return View(
+                "Error",new ErrorViewModel{
+                    RequestId=Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                }
+            );
+        }
+
+        protected IActionResult HandleDbError(DbException dbException)
+        {
+            var viewModel = new DbErrorViewModel{
+                ErrorMessage="Error de base de datos",
+                Details=dbException.Message
+            };
+            return View("DbError", viewModel);
+        }
+
+        protected IActionResult HandleDbUpdateError(DbUpdateException dbUpdateException)
+        {
+            var viewModel = new DbErrorViewModel{
+                ErrorMessage="Error de actualizacion de datos",
+                Details=dbUpdateException.Message
+            };
+            return View("DbError", viewModel);
         }
     }
 }

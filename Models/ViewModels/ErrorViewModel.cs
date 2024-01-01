@@ -1,4 +1,4 @@
-namespace AnniesShop.Models;
+namespace AnniesShop.Models.ViewModels;
 
 public class ErrorViewModel
 {
