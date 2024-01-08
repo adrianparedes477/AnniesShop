@@ -20,7 +20,7 @@ namespace AnniesShop.Models
         [StringLength(1000)]
         public string Descripcion { get; set; } =null!;
         [Required]
-        public double Precio { get; set; }
+        public decimal Precio { get; set; }
         [Required]
         [StringLength(255)]
         public string Imagen { get; set; } =null!;
