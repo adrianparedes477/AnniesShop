@@ -45,11 +45,11 @@ public class HomeController : BaseController
         try
         {
             int productoPorPagina = 9;
-            var model = await _productoService.GetProductoPaginado(categoriaId, busqueda, pagina, productoPorPagina);
+            var model = await _productoService.GetProductosPaginados(categoriaId, busqueda, pagina, productoPorPagina);
 
             ViewBag.Categorias = await _categoriaService.GetCategorias();
 
-            if (Request.Headers["X-Request-With"] == "XMLHttpRequest")
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
                 return PartialView("_ProductoPartial", model);
             }

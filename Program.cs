@@ -1,5 +1,6 @@
 using System.Globalization;
 using AnniesShop.Data;
+using AnniesShop.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +28,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     o.LoginPath = "/Account/Login";
     o.AccessDeniedPath = "/Account/AccessDenied";
 });
+
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 
 var app = builder.Build();
 

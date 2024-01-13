@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AnniesShop.Data;
 using AnniesShop.Models;
 using AnniesShop.Models.ViewModels;
@@ -23,6 +19,7 @@ namespace AnniesShop.Services
             var producto = _context.Productos
                 .Include(p => p.Categoria)
                 .FirstOrDefault(p => p.ProductoId == id);
+
             if (producto != null)
                 return producto;
 
@@ -34,18 +31,16 @@ namespace AnniesShop.Services
             IQueryable<Producto> productosQuery = _context.Productos;
             productosQuery = productosQuery.Where(p => p.Activo);
 
-            List<Producto> productosDestacados = await productosQuery
-            .Take(9)
-            .ToListAsync();
-
+            List<Producto> productosDestacados = await productosQuery.Take(9).ToListAsync();
             return productosDestacados;
         }
 
-        public async Task<ProductosPaginadoViewModel> GetProductoPaginado(
+        public async Task<ProductosPaginadosViewModel> GetProductosPaginados(
             int? categoriaId,
             string? busqueda,
             int pagina,
-            int productoPorPagina)
+            int productosPorPagina
+        )
         {
             IQueryable<Producto> query = _context.Productos;
             query = query.Where(p => p.Activo);
@@ -53,14 +48,13 @@ namespace AnniesShop.Services
             if (categoriaId.HasValue)
                 query = query.Where(p => p.CategoriaId == categoriaId);
 
-
             if (!string.IsNullOrEmpty(busqueda))
                 query = query.Where(
                     p => p.Nombre.Contains(busqueda) || p.Descripcion.Contains(busqueda)
                 );
             int totalProductos = await query.CountAsync();
 
-            int totalPaginas = (int)Math.Ceiling((double)totalProductos) / productoPorPagina;
+            int totalPaginas = (int)Math.Ceiling((double)totalProductos / productosPorPagina);
 
             if (pagina < 1)
                 pagina = 1;
@@ -71,26 +65,25 @@ namespace AnniesShop.Services
             if (totalProductos > 0)
             {
                 productos = await query
-                .OrderBy(p => p.Nombre)
-                .Skip((pagina - 1) * productoPorPagina)
-                .Take(productoPorPagina)
-                .ToListAsync();
+                    .OrderBy(p => p.Nombre)
+                    .Skip((pagina - 1) * productosPorPagina)
+                    .Take(productosPorPagina)
+                    .ToListAsync();
             }
 
             bool mostrarMensajeSinResultados = totalProductos == 0;
 
-            var model = new ProductosPaginadoViewModel{
-                Productos=productos,
-                PaginaActual=pagina,
-                TotalPaginas=totalPaginas,
-                CategoriaIdSeleccionada=categoriaId,
-                Busqueda=busqueda,
-                MostrarMensajeSinResultados=mostrarMensajeSinResultados
+            var model = new ProductosPaginadosViewModel
+            {
+                Productos = productos,
+                PaginaActual = pagina,
+                TotalPaginas = totalPaginas,
+                CategoriaIdSeleccionada = categoriaId,
+                Busqueda = busqueda,
+                MostrarMensajeSinResultados = mostrarMensajeSinResultados
             };
 
             return model;
         }
-
-
     }
 }

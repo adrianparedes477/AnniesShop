@@ -9,7 +9,6 @@ namespace AnniesShop.Services
 
         Task<List<Producto>> GetProductosDestacados();
 
-        Task<ProductosPaginadoViewModel> GetProductoPaginado(int? categoriaId,string? busqueda, int pagina, int 
-            productoPorPagina);
+        Task<ProductosPaginadosViewModel> GetProductosPaginados(int? categoriaId, string? busqueda, int pagina, int productosPorPagina);
     }
 }
