@@ -6,7 +6,6 @@ using AnniesShop.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using PayPalCheckoutSdk.Orders;
 
 
 namespace AnniesShop.Controllers
@@ -30,18 +29,22 @@ namespace AnniesShop.Controllers
         protected int GetCarritoCount()
         {
             int count = 0;
-
-            string? carritoJson = Request.Cookies["carrito"];
-
-            if (!string.IsNullOrEmpty(carritoJson))
+            try
             {
-                var carrito = JsonConvert.DeserializeObject<List<ProductoIdAndCantidad>>(
-                    carritoJson
-                );
-                if (carrito != null)
+                string carritoJson = Request.Cookies["carrito"];
+                if (!string.IsNullOrEmpty(carritoJson))
                 {
-                    count = carrito.Count;
+                    var carrito = JsonConvert.DeserializeObject<List<ProductoIdAndCantidad>>(carritoJson);
+                    if (carrito != null)
+                    {
+                        count = carrito.Count;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción o registrarla según sea necesario
+                // Log.Error(ex, "Error al obtener el carrito count");
             }
 
             return count;
@@ -49,106 +52,115 @@ namespace AnniesShop.Controllers
 
         public async Task<CarritoViewModel> AgregarProductoAlCarrito(int productoId, int cantidad)
         {
-            var producto = await _context.Productos.FindAsync(productoId);
-
-            if (producto != null)
+            try
             {
-                var carritoViewModel = await GetCarritoViewModelAsync();
+                var producto = await _context.Productos.FindAsync(productoId);
 
-                var carritoItem = carritoViewModel.Items.FirstOrDefault(
-                    item => item.ProductoId == productoId
-                );
-
-                if (carritoItem != null)
-                    carritoItem.Cantidad += cantidad;
-                else
+                if (producto != null && cantidad > 0)
                 {
-                    carritoViewModel.Items.Add(
-                        new CarritoItemViewModel
+                    var carritoViewModel = await GetCarritoViewModelAsync();
+
+                    var carritoItem = carritoViewModel.Items.FirstOrDefault(item => item.ProductoId == productoId);
+
+                    if (carritoItem != null)
+                        carritoItem.Cantidad += cantidad;
+                    else
+                    {
+                        carritoViewModel.Items.Add(new CarritoItemViewModel
                         {
                             ProductoId = producto.ProductoId,
                             Nombre = producto.Nombre,
                             Precio = producto.Precio,
                             Cantidad = cantidad
-                        }
+                        });
+                    }
+                    carritoViewModel.Total = carritoViewModel.Items.Sum(item => item.Cantidad * item.Precio);
 
-                    );
+                    await UpdateCarritoViewModelAsync(carritoViewModel);
+                    return carritoViewModel;
                 }
-                carritoViewModel.Total = carritoViewModel.Items.Sum(
-                    Item => Item.Cantidad * Item.Precio
-                );
 
-                await UpdateCarritoViewModelAsync(carritoViewModel);
-                return carritoViewModel;
-
+                return new CarritoViewModel();
             }
-
-            return new CarritoViewModel();
-
+            catch (Exception ex)
+            {
+                // Manejar la excepción o registrarla según sea necesario
+                // Log.Error(ex, "Error al agregar producto al carrito");
+                return new CarritoViewModel();
+            }
         }
 
         private async Task UpdateCarritoViewModelAsync(CarritoViewModel carritoViewModel)
         {
-            var productoIds = carritoViewModel.Items
-                .Select(
-                    item => new ProductoIdAndCantidad
+            try
+            {
+                var productoIds = carritoViewModel.Items
+                    .Select(item => new ProductoIdAndCantidad
                     {
                         ProductoId = item.ProductoId,
                         Cantidad = item.Cantidad
-                    }
-                )
-                .ToList();
-            var carritoJson = await Task.Run(() => JsonConvert.SerializeObject(productoIds));
-            Response.Cookies.Append(
-                "carrito",
-                carritoJson,
-                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(7) }
-            );
+                    })
+                    .ToList();
+                var carritoJson = await Task.Run(() => JsonConvert.SerializeObject(productoIds));
+                Response.Cookies.Append(
+                    "carrito",
+                    carritoJson,
+                    new CookieOptions { Expires = DateTimeOffset.Now.AddDays(7) }
+                );
+            }
+            catch (Exception ex)
+            {
+                
+                // Log.Error(ex, "Error al actualizar el carrito");
+            }
         }
 
         public async Task<CarritoViewModel> GetCarritoViewModelAsync()
         {
-            var carritoJson = Request.Cookies["carrito"];
-
-            if (string.IsNullOrEmpty(carritoJson))
-                return new CarritoViewModel();
-
-            var productoIdsAndCantidades = JsonConvert.DeserializeObject<
-                List<ProductoIdAndCantidad>
-            >(carritoJson);
-            var carritoViewModel = new CarritoViewModel();
-
-            if (productoIdsAndCantidades != null)
+            try
             {
-                foreach (var item in productoIdsAndCantidades)
+                var carritoJson = Request.Cookies["carrito"];
+
+                if (string.IsNullOrEmpty(carritoJson))
+                    return new CarritoViewModel();
+
+                var productoIdsAndCantidades = JsonConvert.DeserializeObject<List<ProductoIdAndCantidad>>(carritoJson);
+                var carritoViewModel = new CarritoViewModel();
+
+                if (productoIdsAndCantidades != null)
                 {
-                    var producto = await _context.Productos.FindAsync(item.ProductoId);
-                    if(producto!=null)
+                    foreach (var item in productoIdsAndCantidades)
                     {
-                        carritoViewModel.Items.Add(
-                            new CarritoItemViewModel
+                        var producto = await _context.Productos.FindAsync(item.ProductoId);
+                        if (producto != null)
+                        {
+                            carritoViewModel.Items.Add(new CarritoItemViewModel
                             {
-                                ProductoId=producto.ProductoId,
-                                Nombre=producto.Nombre,
-                                Precio=producto.Precio,
-                                Cantidad=item.Cantidad
-                            }
-                        );
+                                ProductoId = producto.ProductoId,
+                                Nombre = producto.Nombre,
+                                Precio = producto.Precio,
+                                Cantidad = item.Cantidad
+                            });
+                        }
                     }
                 }
+                carritoViewModel.Total = carritoViewModel.Items.Sum(item => item.Subtotal);
+                return carritoViewModel;
             }
-            carritoViewModel.Total = carritoViewModel.Items.Sum(item => item.Subtotal);
-            return carritoViewModel;
+            catch (Exception ex)
+            {
+                // Manejar la excepción o registrarla según sea necesario
+                // Log.Error(ex, "Error al obtener el carrito ViewModel");
+                return new CarritoViewModel();
+            }
         }
 
         protected IActionResult HandleError(Exception e)
         {
-            return View(
-                "Error", new ErrorViewModel
-                {
-                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-                }
-            );
+            return View("Error", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
 
         protected IActionResult HandleDbError(DbException dbException)
@@ -171,4 +183,5 @@ namespace AnniesShop.Controllers
             return View("DbError", viewModel);
         }
     }
+
 }

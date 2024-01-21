@@ -11,7 +11,8 @@ public class HomeController : BaseController
     private readonly IProductoService _productoService;
     private readonly ICategoriaService _categoriaService;
 
-    public HomeController(ILogger<HomeController> logger,
+    public HomeController(
+        ILogger<HomeController> logger,
         ApplicationDbContext context,
         IProductoService productoService,
         ICategoriaService categoriaService
@@ -26,36 +27,12 @@ public class HomeController : BaseController
     public async Task<IActionResult> Index()
     {
         ViewBag.Categorias = await _categoriaService.GetCategorias();
+        
+
         try
         {
             List<Producto> productosDestacados = await _productoService.GetProductosDestacados();
             return View(productosDestacados);
-        }
-        catch (Exception e)
-        {
-            return HandleError(e);
-        }
-    }
-
-    public async Task<IActionResult> Productos(
-        int? categoriaId,
-        string? busqueda,
-        int pagina = 1)
-    {
-        try
-        {
-            int productoPorPagina = 9;
-            var model = await _productoService.GetProductosPaginados(categoriaId, busqueda, pagina, productoPorPagina);
-
-            ViewBag.Categorias = await _categoriaService.GetCategorias();
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                return PartialView("_ProductoPartial", model);
-            }
-
-            return View(model);
-
         }
         catch (Exception e)
         {
@@ -72,10 +49,36 @@ public class HomeController : BaseController
         return View(producto);
     }
 
+    public async Task<IActionResult> Productos(int? categoriaId, string? busqueda, int pagina = 1)
+    {
+        try
+        {
+            int productosPorPagina = 9;
+            var model = await _productoService.GetProductosPaginados(
+                categoriaId,
+                busqueda,
+                pagina,
+                productosPorPagina
+            );
+
+            ViewBag.Categorias = await _categoriaService.GetCategorias();
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_ProductosPartial", model);
+            }
+
+            return View(model);
+        }
+        catch (Exception e)
+        {
+            return HandleError(e);
+        }
+    }
+
     public async Task<IActionResult> AgregarProducto(
         int id,
         int cantidad,
-        int categoriaId,
+        int? categoriaId,
         string? busqueda,
         int pagina = 1
     )
@@ -84,38 +87,37 @@ public class HomeController : BaseController
         if (carritoViewModel != null)
         {
             return RedirectToAction(
-                "Producto", new { id, categoriaId, busqueda, pagina }
+                "Productos",
+                new
+                {
+                    id,
+                    categoriaId,
+                    busqueda,
+                    pagina
+                }
             );
         }
         else
             return NotFound();
     }
-    public async Task<IActionResult> AgregarProductoIndex(
-        int id,
-        int cantidad
-    )
+
+    public async Task<IActionResult> AgregarProductoIndex(int id, int cantidad)
     {
         var carritoViewModel = await AgregarProductoAlCarrito(id, cantidad);
         if (carritoViewModel != null)
         {
-            return RedirectToAction(
-                "Index"
-            );
+            return RedirectToAction("Index");
         }
         else
             return NotFound();
     }
-    public async Task<IActionResult> AgregarProductoDetalle(
-        int id,
-        int cantidad
-    )
+
+    public async Task<IActionResult> AgregarProductoDetalle(int id, int cantidad)
     {
         var carritoViewModel = await AgregarProductoAlCarrito(id, cantidad);
         if (carritoViewModel != null)
         {
-            return RedirectToAction(
-                "DetalleProducto", new {id}
-            );
+            return RedirectToAction("DetalleProducto", new { id });
         }
         else
             return NotFound();
@@ -125,6 +127,4 @@ public class HomeController : BaseController
     {
         return View();
     }
-
-    
 }

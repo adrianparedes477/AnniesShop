@@ -68,7 +68,7 @@ namespace AnniesShop.Controllers
                         Estado=usuario.Estado,
                         CodigoPostal = usuario.CodigoPostal
                     }
-                }; //video 4 min 44:38
+                }; 
 
                 _context.Add(usuario);
                 await _context.SaveChangesAsync();
@@ -115,7 +115,6 @@ namespace AnniesShop.Controllers
 
             if (rol != null)
             {
-                usuario.Rol = rol;
 
                 var existngUser = await _context.Usuarios
                     .Include(u => u.Direcciones)
@@ -144,6 +143,13 @@ namespace AnniesShop.Controllers
                             }
                         };
                     }
+                    existngUser.Rol=rol;
+                    existngUser.RolId = usuario.RolId;
+                    existngUser.Nombre = usuario.Nombre;
+                    existngUser.Telefono = usuario.Telefono;
+                    existngUser.NombreUsuario = usuario.NombreUsuario;
+                    existngUser.Contrasenia = usuario.Contrasenia;
+                    existngUser.Correo = usuario.Correo;
 
                     try
                     {
