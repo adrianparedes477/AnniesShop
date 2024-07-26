@@ -42,7 +42,7 @@ namespace AnniesShop.Controllers
         // GET: Direcciones/Create
         public IActionResult Create()
         {
-            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "CodigoPostal");
+            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "Nombre");
             return View();
         }
 
@@ -59,7 +59,7 @@ namespace AnniesShop.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "CodigoPostal", direccion.UsuarioId);
+            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "Nombre", direccion.UsuarioId);
             return View(direccion);
         }
 
@@ -76,7 +76,7 @@ namespace AnniesShop.Controllers
             {
                 return NotFound();
             }
-            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "CodigoPostal", direccion.UsuarioId);
+            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "Nombre", direccion.UsuarioId);
             return View(direccion);
         }
 
@@ -112,7 +112,7 @@ namespace AnniesShop.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "CodigoPostal", direccion.UsuarioId);
+            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "UsuarioId", "Nombre", direccion.UsuarioId);
             return View(direccion);
         }
 
